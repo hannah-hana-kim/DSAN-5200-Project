@@ -1,8 +1,8 @@
 library(tidyverse)
 
 #initial read in
-europeNA <- read.csv('RawData/Europe+NA/Food_Security_Data_E_Northern_America_and_Europe_NOFLAG.csv')
-africa <- read.csv('RawData/Africa/Food_Security_Data_E_Africa_NOFLAG.csv')
+europeNA <- read.csv('data/RawData/Europe+NA/Food_Security_Data_E_Northern_America_and_Europe_NOFLAG.csv')
+africa <- read.csv('data/RawData/Africa/Food_Security_Data_E_Africa_NOFLAG.csv')
 
 #add region code for ease of comparison later
 europeNA <- europeNA %>% 
@@ -56,7 +56,7 @@ energyPapa <- energyAdequacy %>%
   )
 
 #export
-write.csv(energyPapa, "CleanedData/energyadequacy.csv")
+write.csv(energyPapa, "data/CleanedData/energyadequacy.csv")
 
 # ------------------------------
 # RAIL DENSITY
@@ -80,7 +80,7 @@ railPapa <- railLine %>%
   )
 
 #export
-write.csv(railPapa, "CleanedData/raildensity.csv")
+write.csv(railPapa, "data/CleanedData/raildensity.csv")
 
 # ------------------------------
 # GDP PER CAPITA
@@ -104,7 +104,7 @@ gdPapa <- gdp %>%
   )
 
 #export
-write.csv(gdPapa, "CleanedData/gdp.csv")
+write.csv(gdPapa, "data/CleanedData/gdp.csv")
 
 
 # ------------------------------
@@ -129,7 +129,7 @@ underPapa <- undernourish %>%
 
 
 #export
-write.csv(underPapa, "CleanedData/undernourishment.csv")
+write.csv(underPapa, "data/CleanedData/undernourishment.csv")
 
 # ------------------------------
 # CEREAL IMPORT RATIO
@@ -156,7 +156,165 @@ cerealPapa <- cerealImport %>%
 head(cerealPapa)
 
 #export
-write.csv(cerealPapa, "CleanedData/cerealimportratio.csv")
+write.csv(cerealPapa, "data/CleanedData/cerealimportratio.csv")
 
+#github shenanigans meant I had to recreate the following code that produced the 
+#food insecurity, obesity in adults, political stability, and stunted vs overweight children minisets
+
+# ------------------------------
+# FOOD INSECURITY
+# ------------------------------
+
+#initial filter
+femaleInsecurity <- bigPapa %>%
+  filter(Item == "Prevalence of severe food insecurity in the female adult population (percent) (3-year average)") %>%
+  filter(Element == 'Value')
+maleInsecurity <- bigPapa %>%
+  filter(Item == "Prevalence of severe food insecurity in the female adult population (percent) (3-year average)") %>%
+  filter(Element == 'Value')
+
+head(femaleInsecurity)
+head(maleInsecurity)
+
+#get rid of unnecessary columns
+femaleInsecurity <- femaleInsecurity %>%
+  select (-all_of(excludeInThreeYearAvg))
+maleInsecurity <- maleInsecurity %>%
+  select (-all_of(excludeInThreeYearAvg))
+
+#pivot
+femalePapa <- femaleInsecurity %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "PercentFemale"
+  )
+malePapa <- maleInsecurity %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "PercentMale"
+  )
+
+head(femalePapa)
+head(malePapa)
+
+#bind
+insecurityPapa <- merge(
+  x = femalePapa,
+  y = malePapa,
+  by = c("Area","Region","YearPeriod"),
+  all = TRUE
+)
+
+head(insecurityPapa)
+
+#export
+write.csv(insecurityPapa, "data/CleanedData/foodinsecuritybygender.csv")
+
+# ------------------------------
+# OBESITY IN ADULTS
+# ------------------------------
+
+#intial filter
+obesity <- bigPapa %>%
+  filter(Item == "Prevalence of obesity in the adult population (18 years and older)")  
+
+head(obesity)
+
+#drop extra cols
+obesity <- obesity %>%
+  select (-all_of(excludeInYearly))
+
+#pivot
+obesityPapa <- obesity %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'Year', 
+    names_prefix = 'Y',
+    values_to = "Percent"
+  )
+
+head(obesityPapa)
+
+#export
+write.csv(obesityPapa, "data/CleanedData/obesityadults.csv")
+
+# ------------------------------
+# POLITICAL STABILITY
+# ------------------------------
+
+#initial filter
+political <- bigPapa %>%
+  filter(Item == "Political stability and absence of violence/terrorism (index)")  
+
+head(political)
+
+#drop extra cols
+political <- political %>%
+  select (-all_of(excludeInYearly))
+
+#pivot
+politicalPapa <- political %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'Year', 
+    names_prefix = 'Y',
+    values_to = "Index"
+  )
+
+head(politicalPapa)
+
+#export
+write.csv(politicalPapa, "data/CleanedData/politicalstability.csv")
+
+# ------------------------------
+# PERCENT CHILDREN UNDER 5 STUNTED VS OVERWEIGHT
+# ------------------------------
+
+#initial filter
+stuntedChildren <- bigPapa %>%
+  filter(Item == "Percentage of children under 5 years of age who are stunted (modelled estimates) (percent)")
+overweightChildren <- bigPapa %>%
+  filter(Item == "Percentage of children under 5 years of age who are overweight (modelled estimates) (percent)")
+
+head(stuntedChildren)
+head(overweightChildren)
+
+#get rid of unnecessary columns
+stuntedChildren <- stuntedChildren %>%
+  select (-all_of(excludeInYearly))
+overweightChildren <- overweightChildren %>%
+  select (-all_of(excludeInYearly))
+
+#pivot
+stuntedPapa <- stuntedChildren %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "PercentStunted"
+  )
+overweightPapa <- overweightChildren %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "PercentOverweight"
+  )
+
+head(stuntedPapa)
+head(overweightPapa)
+
+#bind
+underFivePapa <- merge(
+  x = stuntedPapa,
+  y = overweightPapa,
+  by = c("Area","Region","YearPeriod"),
+  all = TRUE
+)
+
+head(underFivePapa)
+
+#export
+write.csv(underFivePapa, "data/CleanedData/childrenunderfiveoverweightstunted.csv")
 
 
