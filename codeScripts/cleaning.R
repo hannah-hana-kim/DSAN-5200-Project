@@ -41,6 +41,8 @@ excludeInYearly <- c("Area.Code", "Area.Code..M49.", "Item.Code", "Item", "Eleme
 energyAdequacy <- bigPapa %>%
   filter(Item == "Average dietary energy supply adequacy (percent) (3-year average)")  
 
+head(energyAdequacy)
+
 #get rid of unnecessary columns
 energyAdequacy <- energyAdequacy %>%
   select (-all_of(excludeInThreeYearAvg))
@@ -52,8 +54,10 @@ energyPapa <- energyAdequacy %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "Percent"
+    values_to = "AVG_Percent"
   )
+
+head(energyPapa)
 
 #export
 write.csv(energyPapa, "data/CleanedData/energyadequacy.csv")
@@ -62,13 +66,17 @@ write.csv(energyPapa, "data/CleanedData/energyadequacy.csv")
 # RAIL DENSITY
 # ------------------------------
 
-#intial filter
+#initial filter
 railLine <- bigPapa %>%
   filter(Item == "Rail lines density (total route in km per 100 square km of land area)")  
+
+head(railLine)
 
 #drop extra cols
 railLine <- railLine %>%
   select (-all_of(excludeInYearly))
+
+head(railLine)
 
 #pivot
 railPapa <- railLine %>%
@@ -76,8 +84,10 @@ railPapa <- railLine %>%
     cols = starts_with("Y"),
     names_to = 'Year', 
     names_prefix = 'Y',
-    values_to = "RailDensity"
+    values_to = "RailDensity(kmTrack/100sqkmLand)"
   )
+
+head(railPapa)
 
 #export
 write.csv(railPapa, "data/CleanedData/raildensity.csv")
@@ -86,13 +96,17 @@ write.csv(railPapa, "data/CleanedData/raildensity.csv")
 # GDP PER CAPITA
 # ------------------------------
 
-#intial filter
+#initial filter
 gdp <- bigPapa %>%
   filter(Item == "Gross domestic product per capita, PPP, (constant 2017 international $)")  
+
+head(gdp)
 
 #drop extra cols
 gdp <- gdp %>%
   select (-all_of(excludeInYearly))
+
+head(gdp)
 
 #pivot
 gdPapa <- gdp %>%
@@ -102,6 +116,8 @@ gdPapa <- gdp %>%
     names_prefix = 'Y',
     values_to = "GDP_PerCapita"
   )
+
+head(gdPapa)
 
 #export
 write.csv(gdPapa, "data/CleanedData/gdp.csv")
@@ -115,18 +131,23 @@ write.csv(gdPapa, "data/CleanedData/gdp.csv")
 undernourish <- bigPapa %>%
   filter(Item == "Prevalence of undernourishment (percent) (3-year average)")  
 
+head(undernourish)
+
 #get rid of unnecessary columns
 undernourish <- undernourish %>%
   select (-all_of(excludeInThreeYearAvg))
+
+head(undernourish)
 
 #pivot
 underPapa <- undernourish %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "Percent"
+    values_to = "AVG_Percent"
   )
 
+head(underPapa)
 
 #export
 write.csv(underPapa, "data/CleanedData/undernourishment.csv")
@@ -145,12 +166,14 @@ head(cerealImport)
 cerealImport <- cerealImport %>%
   select (-all_of(excludeInThreeYearAvg))
 
+head(cerealImport)
+
 #pivot
 cerealPapa <- cerealImport %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "Percent"
+    values_to = "AVG_ImportDependencyRatio"
   )
 
 head(cerealPapa)
@@ -158,8 +181,6 @@ head(cerealPapa)
 #export
 write.csv(cerealPapa, "data/CleanedData/cerealimportratio.csv")
 
-#github shenanigans meant I had to recreate the following code that produced the 
-#food insecurity, obesity in adults, political stability, and stunted vs overweight children minisets
 
 # ------------------------------
 # FOOD INSECURITY
@@ -182,18 +203,21 @@ femaleInsecurity <- femaleInsecurity %>%
 maleInsecurity <- maleInsecurity %>%
   select (-all_of(excludeInThreeYearAvg))
 
+head(femaleInsecurity)
+head(maleInsecurity)
+
 #pivot
 femalePapa <- femaleInsecurity %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "PercentFemale"
+    values_to = "AVG_PercentFemale"
   )
 malePapa <- maleInsecurity %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "PercentMale"
+    values_to = "AVG_PercentMale"
   )
 
 head(femalePapa)
@@ -287,18 +311,21 @@ stuntedChildren <- stuntedChildren %>%
 overweightChildren <- overweightChildren %>%
   select (-all_of(excludeInYearly))
 
+head(stuntedChildren)
+head(overweightChildren)
+
 #pivot
 stuntedPapa <- stuntedChildren %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "PercentStunted"
+    values_to = "AVG_PercentStunted"
   )
 overweightPapa <- overweightChildren %>%
   pivot_longer(
     cols = starts_with("Y"),
     names_to = 'YearPeriod', 
-    values_to = "PercentOverweight"
+    values_to = "AVG_PercentOverweight"
   )
 
 head(stuntedPapa)
@@ -316,5 +343,111 @@ head(underFivePapa)
 
 #export
 write.csv(underFivePapa, "data/CleanedData/childrenunderfiveoverweightstunted.csv")
+
+# ------------------------------
+# ENERGY FROM CEREALS
+# ------------------------------
+
+#initial filter
+cerealEnergy <- bigPapa %>%
+  filter(Item == "Share of dietary energy supply derived from cereals, roots and tubers (kcal/cap/day) (3-year average)")  
+
+head(cerealEnergy)
+
+#get rid of unnecessary columns
+cerealEnergy <- cerealEnergy %>%
+  select (-all_of(excludeInThreeYearAvg))
+
+head(cerealEnergy)
+
+#pivot
+cerealPapaTwo <- cerealEnergy %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "AVG_kcal/cap/day"
+  )
+
+head(cerealPapaTwo)
+
+#export
+write.csv(cerealPapaTwo, "data/CleanedData/energyfromcereal.csv")
+
+# ------------------------------
+# PROTEIN
+# ------------------------------
+
+#initial filter
+proteinSupply <- bigPapa %>%
+  filter(Item == "Average protein supply (g/cap/day) (3-year average)")
+proteinAnimal <- bigPapa %>%
+  filter(Item == "Average supply of protein of animal origin (g/cap/day) (3-year average)")
+
+head(proteinSupply)
+head(proteinAnimal)
+
+#get rid of unnecessary columns
+proteinSupply <- proteinSupply %>%
+  select (-all_of(excludeInThreeYearAvg))
+proteinAnimal <- proteinAnimal %>%
+  select (-all_of(excludeInThreeYearAvg))
+
+head(proteinSupply)
+head(proteinAnimal)
+
+#pivot
+supplyPapa <- proteinSupply %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "TotalProtein(AVG_g/cap/day)"
+  )
+animalPapa <- proteinAnimal %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "AnimalProtein(AVG_g/cap/day)"
+  )
+
+proteinPapa <- merge(
+  x = supplyPapa,
+  y = animalPapa,
+  by = c("Area","Region","YearPeriod"),
+  all = TRUE
+)
+
+head(proteinPapa)
+
+#export
+write.csv(proteinPapa, "data/CleanedData/proteinsupply.csv")
+
+# ------------------------------
+# FAT SUPPLY
+# ------------------------------
+
+#initial filter
+fatSupply <- bigPapa %>%
+  filter(Item == "Average fat supply (g/cap/day) (3-year average)")  
+
+head(fatSupply)
+
+#get rid of unnecessary columns
+fatSupply <- fatSupply %>%
+  select (-all_of(excludeInThreeYearAvg))
+
+head(fatSupply)
+
+#pivot
+fatPapa <- fatSupply %>%
+  pivot_longer(
+    cols = starts_with("Y"),
+    names_to = 'YearPeriod', 
+    values_to = "AVG_g/cap/day"
+  )
+
+head(fatPapa)
+
+#export
+write.csv(fatSupply, "data/CleanedData/fatsupply.csv")
 
 
