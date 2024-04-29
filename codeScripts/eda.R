@@ -2,6 +2,7 @@ library(ggplot2)
 library(visdat)
 library(plotly)
 library(scales)
+library(crosstalk)
 
 # ------------------------------
 # BASIC THEMEING (not final!!)
@@ -244,13 +245,27 @@ polPlusGDP <- merge(
   y = eneAdMan,
   by = c('Area', 'Region', 'PrimaryColonizer', 'Year')
 )
+polPlusGDP <- polPlusGDP %>% filter(Year != 2000 & Year != 2001 & Year != 2022)
 
 head(polPlusGDP)
 
 polPlusGDP$GDP_PerCapita = as.numeric(polPlusGDP$GDP_PerCapita)
 
+avgPolGDP <- polPlusGDP %>%
+  filter(!is.na(GDP_PerCapita)) %>%
+  filter(!is.na(Index)) %>%
+  group_by(Region, Year) %>%
+  summarise(AVG_Percent = mean(GDP_PerCapita),
+            AVG_Index = mean(Index)) %>%
+  mutate('Area' = Region) %>%
+  mutate(Region = paste("Continent of\n", Region))
+
+print(avgPolGDP)
+
+avgPolGDP <- as.data.frame(avgPolGDP)
+
 polGDP <- ggplot(
-  data = polPlusGDP %>% filter(Year != 2000 & Year != 2001 & Year != 2022),
+  data = polPlusGDP,
   aes(x = GDP_PerCapita, 
       y = Index, 
       color = Region, 
@@ -268,7 +283,14 @@ polGDP <- ggplot(
   ) +
   scale_y_continuous(limits = c(-2.5,2.5)) +
   scale_x_continuous(labels = label_dollar()) +
-  geom_hline(yintercept = 0, color = 'grey')
+  geom_hline(yintercept = 0, color = 'grey')+
+  scale_color_manual(values = c("#598b2c", "#ffa400", "#42Cafd", "#140d4f")) +
+  geom_point(data = avgPolGDP,
+             aes(x = AVG_Percent, 
+                 y = AVG_Index),
+             size = 10,
+             alpha = 0.5
+  )
 
 (polGDP)
 
@@ -332,7 +354,7 @@ head(polEn)
 
 polEn$AVG_Percent <- as.numeric(polEn$AVG_Percent)
 
-avg_data <- polEn %>%
+avg_data <- bigMergePapa %>%
   filter(!is.na(AVG_Percent)) %>%
   filter(!is.na(AVG_Index)) %>%
   group_by(Region, YearPeriod) %>%
@@ -345,8 +367,42 @@ print(avg_data)
 
 avg_data <- as.data.frame(avg_data)
 
+
+polEn$PrimaryColonizer <- replace(polEn$PrimaryColonizer, polEn$PrimaryColonizer == 'United Kingdom of Great Britain and Northern Ireland', 'UK')
+polEn$PrimaryColonizer <- replace(polEn$PrimaryColonizer, polEn$PrimaryColonizer == 'Netherlands (Kingdom of the)', 'The Netherlands')
+
+polEn$Area <- replace(polEn$Area, polEn$Area == 'United Kingdom of Great Britain and Northern Ireland', 'UK')
+polEn$Area <- replace(polEn$Area, polEn$Area == 'Netherlands (Kingdom of the)', 'The Netherlands')
+
+proteinPapa$PrimaryColonizer <- replace(proteinPapa$PrimaryColonizer, proteinPapa$PrimaryColonizer == 'United Kingdom of Great Britain and Northern Ireland', 'UK')
+proteinPapa$PrimaryColonizer <- replace(proteinPapa$PrimaryColonizer, proteinPapa$PrimaryColonizer == 'Netherlands (Kingdom of the)', 'The Netherlands')
+
+proteinPapa$Area <- replace(proteinPapa$Area, proteinPapa$Area == 'United Kingdom of Great Britain and Northern Ireland', 'UK')
+proteinPapa$Area <- replace(proteinPapa$Area, proteinPapa$Area == 'Netherlands (Kingdom of the)', 'The Netherlands')
+
+head(polEn)
+
+head(proteinPapa)
+colnames(proteinPapa) <- c('X', 'Area', 'Region', 'YearPeriod', 'PrimaryColonizer', 'TotalProtein', 'AnimalProtein')
+
+proteinPapa <- proteinPapa %>%
+  mutate(NonAnimalProtein = TotalProtein - AnimalProtein)
+
+bigMergePapa <- merge(
+  x = polEn, 
+  y = proteinPapa,
+  by = c('Area', 'Region', 'PrimaryColonizer', 'YearPeriod'),
+  all = TRUE
+)
+
+bigMergePapa <- subset(bigMergePapa, select = -c(PrimaryColonizer, X))
+
+head(bigMergePapa)
+
+bigMergePapa <- na.omit(bigMergePapa)
+
 stabilityVsEnergy <- ggplot(
-  data = polEn,
+  data = bigMergePapa,
   aes(x = (AVG_Percent)/100, 
       y = AVG_Index, 
       color = Region, 
@@ -357,10 +413,10 @@ stabilityVsEnergy <- ggplot(
   geom_hline(yintercept = 0, color = 'grey') +
   geom_point(size = 3, alpha = 0.7) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_y_continuous(limits = c(-3,3)) +
+  scale_y_continuous(limits = c(-2.5,2.5)) +
   scale_x_continuous(limits = c(.40, 1.60), labels = label_percent()) +
   labs(
-    title = "Political Stability Index vs Adequacy of Energy Supply",
+    title = "Political Stability Index vs Protein Supply and Adequacy of Energy Supply",
     subtitle = "Europe vs Africa (3 Year Average)",
     y = "Political Stability Index",
     x = "Dietary Energy Supply Adequacy",
@@ -371,7 +427,8 @@ stabilityVsEnergy <- ggplot(
                  y = AVG_Index),
              size = 10,
              alpha = 0.5
-  )
+  ) + 
+  scale_color_manual(values = c("#598b2c", "#ffa400", "#42Cafd", "#140d4f"))
 
 (stabilityVsEnergy)
 
@@ -390,4 +447,95 @@ plotlypolEn <- plotlypolEn %>%
 
 (plotlypolEn)
 
+head(bigMergePapa)
 
+avgProtein <- bigMergePapa %>%
+  filter(!is.na(TotalProtein)) %>%
+  group_by(Region, YearPeriod) %>%
+  summarise(AVG_Protein = mean(TotalProtein),
+            AVG_Index = mean(AVG_Index)) %>%
+  mutate('Area' = Region) %>%
+  mutate(Region = paste("Continent of\n", Region))
+
+print(avgProtein)
+
+avgProtein <- as.data.frame(avgProtein)
+
+
+proteinScatter <- ggplot(
+  data = bigMergePapa,
+  aes(x = TotalProtein, #AnimalProtein, 
+      y = AVG_Index, #NonAnimalProtein,
+      color = Region, 
+      text = Area,
+      frame = YearPeriod)
+) + 
+  geom_point(size = 3, alpha = 0.7) +
+  geom_point(data = avgProtein,
+             aes(x = AVG_Protein, 
+                 y = AVG_Index),
+             size = 10,
+             alpha = 0.5
+  ) + 
+  scale_y_continuous(limits = c(-2.5,2.5)) +
+  theme(legend.position = "none") + 
+  scale_color_manual(values = c("#598b2c", "#ffa400", "#42Cafd", "#140d4f"))+
+  labs(
+    title = "Political Stability Index vs Protein Supply and Adequacy of Energy Supply",
+    subtitle = "Europe vs Africa (3 Year Average)",
+    y = "Political Stability Index",
+    x = "Protein Supply (Grams/Capita/Day)",
+    caption = "Lower/negative political stability index values indicate a high perception of likelihood of political violence,\nwith higher/positive values indicating the opposite.\nDietary energy supply adequacy of 100% indicates that the average person in the country receives exactly the necessary energy from their diet."
+  ) +
+  geom_hline(yintercept = 0, color = 'grey')
+  
+
+(proteinScatter)
+
+plotlyProtein <- ggplotly(proteinScatter, tooltip = "text", show_legend = FALSE)
+
+(plotlyProtein)
+
+hopefulLinked <- subplot(
+  plotlyProtein,
+  plotlypolEn,
+  nrows = 1
+)
+
+hopefulLinked <- hopefulLinked %>%
+  highlight(
+    on = "plotly_selecting",
+    selectize = TRUE,
+    opacityDim = 0.1,
+  )
+
+
+(hopefulLinked)
+
+#colonial <- ggplot(
+#  data = polEn %>% 
+#    filter(!is.na(PrimaryColonizer)) %>% 
+#    distinct(Area, Region, PrimaryColonizer),
+#  aes(x = PrimaryColonizer)
+#) +
+#  geom_bar() +
+#  coord_flip() +
+#  labs(
+#    title = "Primary Colonizers of African Nations",
+#    subtitle = "",
+#    y = "Number of Colonies",
+#    x = "European Colonial Powers"
+#  )
+
+#(colonial)
+
+#plotlyColonial <- ggplotly(colonial)
+
+#(plotlyColonial)
+
+#failedlinked <- subplot(
+#  plotlyColonial,
+#  plotlypolEn,
+#  nrows = 1)
+
+#(linked)
