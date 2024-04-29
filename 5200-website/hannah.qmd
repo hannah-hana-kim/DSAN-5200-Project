@@ -1,0 +1,318 @@
+---
+title: Climate Change and Food Insecurity
+author: Hannah Kim
+format:
+  html:
+    embed-resources: true
+jupyter: python3
+---
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import geopandas as gpd
+```
+
+## World population by continents
+
+```{python}
+world = pd.read_csv('data/world_population.csv')
+world_cp = world.copy()
+world_cp.head()
+```
+
+```{python}
+# drop unnecessary columns
+world_cp = world_cp.drop(['Rank', 'CCA3', 'Country/Territory', 'Capital', 'Area (km²)', 'Density (per km²)', 'Growth Rate'], axis=1)
+
+# lowercase all the columns
+world_cp.columns = world_cp.columns.str.lower()
+
+# replace the spaces with underscore
+world_cp.columns = world_cp.columns.str.replace(' ', '_')
+
+# rename the columns
+world_cp = world_cp.rename(columns={'2022_population': '2022', '2020_population': '2020', '2015_population': '2015', '2010_population': '2010', '2000_population': '2000', '1990_population': '1990', '1980_population': '1980', '1970_population': '1970'})
+world_cp.head()
+```
+
+```{python}
+ojs_define(data = world_cp)
+```
+```{ojs}
+data_t = transpose(data)
+Inputs.table(data_t)
+```
+
+```{ojs}
+Plot.plot({data_t,
+  color: {legend: true},
+  marks: [
+    Plot.ruleY([0]),
+    Plot.lineY(stocks, {x: "Date", y: "Close", stroke: "Symbol"})
+  ]
+})
+```
+
+```{ojs}
+Plot.plot({
+  style: "overflow: visible;",
+  x: {
+    grid: true,
+    label: "world_cp"
+  },
+  y: {
+    grid: true,
+    label: "Output Units"
+  },
+  //color: {
+  //  type: "ordinal",
+  //  scheme: "category10",
+  //  legend: "ramp"
+  //},
+  marks: [
+    Plot.ruleX([0]),
+    Plot.ruleY([0]),
+    Plot.line(points, {
+      x:"labor",
+      y:"value",
+      stroke:"dep_var"
+    }),
+    Plot.text(points, Plot.selectLast({
+      x:"labor",
+      y:"value",
+      z:"dep_var",
+      text:"dep_var",
+      textAnchor:"start",
+      dx: 3
+    }))
+      
+    //Plot.line(marg_prod, {text: "Marginal Product of Labor", textAnchor:"start", stroke:"orange"})
+  ]
+})
+```
+
+## Load the data
+
+```{python}
+raw_df = pd.read_csv('./data/FAOSTAT_data.csv')
+raw_df
+```
+
+Food insecurity:
+
+* Prevalence of severe food insecurity in the total population (percent): 210401 (M/F)
+* Prevalence of moderate or severe food insecurity in the total population (percent): 210091 (M/F)
+* Number of severely food insecure people (million): 210071 (M/F)
+* Number of moderately or severely food insecure people (million): 210081 (M/F)
+
+## Further cleaning and preprocessing
+
+```{python}
+raw_df.columns = raw_df.columns.str.lower()
+raw_df.columns = raw_df.columns.str.replace(' ', '_')
+# change the area column to country column
+raw_df = raw_df.rename(columns={'area': 'country'})
+```
+
+```{python}
+# filter out the data by item code
+# prevalence of severe food insecurity in the total population
+prev_severe_total = raw_df[raw_df['item_code'] == '210401'] 
+prev_severe_male = raw_df[raw_df['item_code'] == '210401M']
+prev_sever_female = raw_df[raw_df['item_code'] == '210401F']
+
+# prevalence of moderate or severe food insecurity in the total population
+prev_mod_total = raw_df[raw_df['item_code'] == '210091']
+prev_mod_male = raw_df[raw_df['item_code'] == '210091M']
+prev_mod_female = raw_df[raw_df['item_code'] == '210091F']
+```
+
+```{python}
+prev_severe_total.head()
+```
+
+```{python}
+print(prev_severe_total['area_code_(m49)'].unique())
+```
+
+```{python}
+# read the data
+code_df = pd.read_csv('./data/country_annotation.csv')
+
+# drop unnecessary columns
+code_df = code_df.drop(columns=['code', 'languages'])
+
+# rename the columns
+code_df = code_df.rename(columns={'name':'country'})
+
+code_df.head()
+```
+
+```{python}
+# copy the dataframe
+df = prev_severe_total.copy()
+# change the value column type to numeric value
+df['value'] = pd.to_numeric(df['value'], errors='coerce')
+```
+
+```{python}
+# group by the country and get the sum of all the values
+df = df.groupby('country', as_index=False)['value'].sum().reset_index(drop=True)
+df
+```
+
+```{python}
+# merge the region data with the main data
+df = pd.merge(df, code_df, on='country', how='left')
+```
+
+```{python}
+df
+```
+
+```{python}
+# drop the rows with value 0
+df = df[df['value'] != 0].reset_index(drop=True)
+df
+```
+
+```{python}
+# dictionary mapping each country to its continent
+country_to_continent = {
+    'Antigua and Barbuda': 'North America',
+    'Bahamas': 'North America',
+    'Barbados': 'North America',
+    'Belize': 'North America',
+    'Cabo Verde': 'Africa',
+    'Congo': 'Africa',
+    'Czechia': 'Europe',
+    'Côte d\'Ivoire': 'Africa',
+    'Eswatini': 'Africa',
+    'Grenada': 'North America',
+    'Haiti': 'North America',
+    'Iran (Islamic Republic of)': 'Asia',
+    'Jamaica': 'North America',
+    'Lao People\'s Democratic Republic': 'Asia',
+    'Myanmar': 'Asia',
+    'Netherlands (Kingdom of the)': 'Europe',
+    'Republic of Korea': 'Asia',
+    'Republic of Moldova': 'Europe',
+    'Russian Federation': 'Europe',
+    'Saint Kitts and Nevis': 'North America',
+    'Saint Lucia': 'North America',
+    'Saint Vincent and the Grenadines': 'North America',
+    'Sao Tome and Principe': 'Africa',
+    'Trinidad and Tobago': 'North America',
+    'United Kingdom of Great Britain and Northern Ireland': 'Europe',
+    'United Republic of Tanzania': 'Africa',
+    'United States of America': 'North America',
+    'Viet Nam': 'Asia'
+}
+
+# map the country to the continent
+df['continent'] = df['continent'].fillna(df['country'].map(country_to_continent))
+
+df
+```
+
+```{python}
+# data sanity check
+# check the continent value
+df.continent.unique()
+
+# replace the incorrect value
+df['continent'] = df['continent'].str.replace('North Americ', 'North America')
+df['continent'] = df['continent'].str.replace('North Americaa', 'North America')
+```
+
+```{python}
+df
+```
+
+## Data Visualiztion: Prevalence of severe food insecurity in the total population
+
+### Nested pie chart
+
+```{python}
+# plot a nested pie chart using plotly
+fig = px.sunburst(df, path=['continent', 'country'], values='value', names = 'country', title='Prevalence of severe food insecurity in the total population',color_discrete_sequence=px.colors.qualitative.Set3)
+# change the plot size
+fig.update_layout(width=800, height=800)
+fig.show()
+```
+
+### Packed Bubble chart
+
+```{python}
+# group the df by continent and aggregate the data
+grouped_df = df.groupby('continent').apply(lambda x: x[['country', 'value']].to_dict(orient='records')).reset_index(name='data')
+
+# convert the grouped DataFrame to a dictionary
+result_dict = grouped_df.set_index('continent').to_dict(orient='index')
+
+print(result_dict)
+```
+
+```{python}
+# # pass the data to js code
+# from flask import Flask, render_template
+
+# app = Flask(__name__)
+
+# @app.route('/')
+# def index():
+#     return render_template('index.html', data=result_dict)
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
+```
+
+---
+
+```{python}
+# load the data
+cleaned_df = pd.read_csv('./data/CleanedData/foodinsecuritybygender.csv', encoding='ISO-8859-1')
+# convert it to dataframe
+cleaned_df = pd.DataFrame(cleaned_df)
+cleaned_df.head()
+```
+
+```{python}
+# fill the null values with 0
+cleaned_df['AVG_PercentFemale']= cleaned_df['AVG_PercentFemale'].fillna(0)
+cleaned_df['AVG_PercentMale']= cleaned_df['AVG_PercentMale'].fillna(0)
+
+# convert the data type to numeric
+cleaned_df['AVG_PercentFemale'] = pd.to_numeric(cleaned_df['AVG_PercentFemale'], errors='coerce')
+cleaned_df['AVG_PercentMale'] = pd.to_numeric(cleaned_df['AVG_PercentMale'], errors='coerce')
+
+# add a new boolean column if the primarycolonizer column is not null
+cleaned_df['colonizer'] = cleaned_df['PrimaryColonizer'].notnull()
+
+cleaned_df
+```
+
+```{python}
+# create a packed bubble chart
+
+def packed_bubble(names, counts, spacing=5):
+    m = plt
+    ''' packed bubble plot using packed_bubbles.html from matplotlib.org '''
+    chart = BubbleChart(area=counts, bubble_spacing=spacing)
+    chart.collapse()
+
+    _, ax = m.subplots(subplot_kw=dict(aspect='equal'))
+    default_colors = m.rcParams['axes.prop_cycle']
+    colors = default_colors.by_key()['color'] * 50
+
+    chart.plot(ax, names, colors)
+    ax.axis('off')
+    ax.relim()
+    ax.autoscale_view()
+    m.show()
+```
+
