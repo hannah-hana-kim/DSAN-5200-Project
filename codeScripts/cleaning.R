@@ -4,21 +4,32 @@ library(tidyverse)
 europeNA <- read.csv('data/RawData/Europe+NA/Food_Security_Data_E_Northern_America_and_Europe_NOFLAG.csv')
 africa <- read.csv('data/RawData/Africa/Food_Security_Data_E_Africa_NOFLAG.csv')
 
+colony <- read.csv('data/colonydata.csv')
+
 #add region code for ease of comparison later
 europeNA <- europeNA %>% 
   mutate('Region' = 'Europe')
 africa <- africa %>%
   mutate('Region' = 'Africa' )
 
-#grab europe country list to filter out North American countries
-#print(unique(europeNA$Area))
+#filter out North American countries
 noThanks <- c("Canada", "Bermuda", "Greenland", "United States of America")
 europe <- europeNA %>%
   filter(!(Area %in% noThanks))
-#print(unique(europe$Area))
 
 #merge em for pulling out metrics
 bigPapa <- rbind(europe, africa)
+
+#add colonial info to African countries
+bigPapa <- merge(
+  x = bigPapa, 
+  y = colony,
+  by.x = 'Area',
+  by.y = 'AfricanCountry',
+  all.x = TRUE)
+
+#drop unnecessary cols after merge
+bigPapa <- subset(bigPapa, select = -c(Empire1, Empire2, Empire3, NotesOnDecisionOfPrimary, X))
 
 print(unique(bigPapa$Item))
 
@@ -32,6 +43,8 @@ excludeInYearly <- c("Area.Code", "Area.Code..M49.", "Item.Code", "Item", "Eleme
                     "Element", "Unit", "Y20002002", "Y20012003", 'Y20022004', "Y20032005", "Y20042006", "Y20052007", "Y20062008",
                     "Y20072009", "Y20082010", "Y20092011", "Y20102012", "Y20112013", "Y20122014", "Y20132015", 
                     "Y20142016", "Y20152017", "Y20162018", "Y20172019", "Y20182020", "Y20192021", "Y20202022")
+
+write.csv(bigPapa, "data/CleanedData/bigPapa.csv")
 
 # ------------------------------
 # DIETARY ENERGY ADEQUACY
@@ -191,7 +204,7 @@ femaleInsecurity <- bigPapa %>%
   filter(Item == "Prevalence of severe food insecurity in the female adult population (percent) (3-year average)") %>%
   filter(Element == 'Value')
 maleInsecurity <- bigPapa %>%
-  filter(Item == "Prevalence of severe food insecurity in the female adult population (percent) (3-year average)") %>%
+  filter(Item == "Prevalence of severe food insecurity in the male adult population (percent) (3-year average)") %>%
   filter(Element == 'Value')
 
 head(femaleInsecurity)
@@ -227,7 +240,7 @@ head(malePapa)
 insecurityPapa <- merge(
   x = femalePapa,
   y = malePapa,
-  by = c("Area","Region","YearPeriod"),
+  by = c("Area","Region","YearPeriod", "PrimaryColonizer"),
   all = TRUE
 )
 
@@ -335,7 +348,7 @@ head(overweightPapa)
 underFivePapa <- merge(
   x = stuntedPapa,
   y = overweightPapa,
-  by = c("Area","Region","YearPeriod"),
+  by = c("Area","Region","YearPeriod", "PrimaryColonizer"),
   all = TRUE
 )
 
@@ -412,7 +425,7 @@ animalPapa <- proteinAnimal %>%
 proteinPapa <- merge(
   x = supplyPapa,
   y = animalPapa,
-  by = c("Area","Region","YearPeriod"),
+  by = c("Area","Region","YearPeriod", "PrimaryColonizer"),
   all = TRUE
 )
 
@@ -448,6 +461,6 @@ fatPapa <- fatSupply %>%
 head(fatPapa)
 
 #export
-write.csv(fatSupply, "data/CleanedData/fatsupply.csv")
+write.csv(fatPapa, "data/CleanedData/fatsupply.csv")
 
 
