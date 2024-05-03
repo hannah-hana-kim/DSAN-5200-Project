@@ -26,6 +26,7 @@ library(ggplot2)
 library(dplyr)
 library(plotly)
 library(maps)
+library(DT)
 ```
 
 ```{r}
@@ -74,27 +75,28 @@ colors <- c("Europe" = "#140D4F", "Africa" = "#598B2C")
 #malnourished plot
 subplot_malnourished <- averages %>%
   plot_ly(x = ~Year, y = ~`Avg Malnourished %`, color = ~Continent, colors=colors, type = 'scatter', mode = 'lines+markers', showlegend=TRUE, text=~Malnourished_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% change)", "<extra></extra>"), marker = list(size = 8)) %>%
-  layout(title = "<b>Average Malnourishment Rate (2000-2020)<b>",
-         xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2020, by = 2)),
+  layout(xaxis = list(title = "<b>Year<b>", range=c(1999,2017), tickvals = seq(2000, 2016, by = 2)),
          yaxis = list(title = "<b>Avg. Malnourishment %<b>", tickvals = seq(0, max(averages$`Avg Malnourished %`) + 1, by = 2), ticktext = paste0(seq(0, max(averages$`Avg Malnourished %`) + 1, by = 2), "%")), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
+         paper_bgcolor = "#FCFFFC",
          font=list(family="Palatino"),
          legend=list(x=1, y=0.5, borderwidth=1, bordercolor='black')) 
 
 #obesity plot
 subplot_obesity <- averages %>%
-  plot_ly(x = ~Year, y = ~`Avg Obesity %`, color = ~Continent, colors=colors, type = 'scatter', mode = 'lines+markers', showlegend=TRUE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% increase)", "<extra></extra>"), marker = list(size = 8)) %>%
-  layout(title = "<b>Average Obesity Rate (2000-2020)<b>",
+  plot_ly(x = ~Year, y = ~`Avg Obesity %`, color = ~Continent, colors=colors, type = 'scatter', mode = 'lines+markers', showlegend=FALSE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% increase)", "<extra></extra>"), marker = list(size = 8)) %>%
+  layout(title = "<b>Average Health Issue Rate in Europe & Africa (2000-2016)<b>",
          xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2016, by = 2)),
          yaxis = list(title = "<b>Avg. Obesity %<b>", tickvals = seq(0, max(averages$`Avg Malnourished %`) + 1, by = 2), ticktext = paste0(seq(0, max(averages$`Avg Malnourished %`) + 1, by = 2), "%")), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
+         paper_bgcolor = "#FCFFFC",
          font=list(family="Palatino"),
          legend=list(x=1, y=0.5, borderwidth=1, bordercolor='black'))
 
-subplot_malnourished
-subplot_obesity
+line_plot <- subplot(subplot_malnourished, subplot_obesity, margin=0.05,
+                     nrows = 1, titleY = TRUE, titleX = TRUE)
+
+line_plot
 ```
 
 ```{r}
@@ -105,62 +107,70 @@ africa_data <- averages %>% filter(Continent == "Africa")
 europe_data <- averages %>% filter(Continent == "Europe")
 
 # malnourishment plots
-malnourished_africa <- plot_ly(africa_data, x = ~Year, y = ~`Avg Malnourished %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Malnourished_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% change)")) %>%
-  layout(title = "<b>Average Malnourishment Rate in Africa and Europe (2000-2020)</b>",
-         xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2020, by = 2)),
+malnourished_africa <- plot_ly(africa_data, x = ~Year, y = ~`Avg Malnourished %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Malnourished_Perc_Diff, hovertemplate = paste("%{y:.2f}% <br> (%{text:.2f}% change)")) %>%
+  layout(title = "<b>Average Malnourishment Rate in Europe & Africa (2000-2016)</b>",
+         xaxis = list(title = "<b>Year<b>", range=c(1999.5,2016.5), tickvals = seq(2000, 2016, by = 2), color = "#1c0b19"),
          yaxis = list(title = "<b>Avg Malnourishment %<b>", 
-                      range = c(0,25),
+                      range = c(0,28),
                       tickvals = seq(0, 25, by = 5), 
-                      ticktext = paste0(seq(0, 25, by = 5), "%")), 
+                      ticktext = paste0(seq(0, 25, by = 5), "%"),
+                      color = "#1c0b19",
+                      showgrid = TRUE, gridcolor = "#F0F8FF"), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
-         font = list(family = "Palatino"),
-         legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='black'))
+         paper_bgcolor = "#FCFFFC",
+         font = list(family = "Palatino", color = "#1c0b19"),
+         legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='#11270b', font=list(color="#1c0b19")))
 
-malnourished_europe <- plot_ly(europe_data, x = ~Year, y = ~`Avg Malnourished %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Malnourished_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% change)")) %>%
-  layout(xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2020, by = 2)),
+malnourished_europe <- plot_ly(europe_data, x = ~Year, y = ~`Avg Malnourished %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Malnourished_Perc_Diff, hovertemplate = paste("%{y:.2f}% <br> (%{text:.2f}% change)")) %>%
+  layout(xaxis = list(title = "<b>Year<b>", range=c(1999.5,2016.5), tickvals = seq(2000, 2016, by = 2), color = "#1c0b19"),
          yaxis = list(title = "<b>Avg Malnourishment %<b>", 
-                      range = c(0,25), 
+                      range = c(0,28), 
                       tickvals = seq(0, 25, by = 5), 
-                      ticktext = paste0(seq(0, 25, by = 5), "%")), 
+                      ticktext = paste0(seq(0, 25, by = 5), "%"),
+                      color = "#1c0b19",
+                      showgrid = TRUE, gridcolor = "#F0F8FF"), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
-         font = list(family = "Palatino"))
+         paper_bgcolor = "#FCFFFC",
+         font = list(family = "Palatino", color = "#1c0b19"),
+         legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='#11270b', font=list(color="#1c0b19")))
 
 # create subplot for malnourishment
 subplot_barcharts <- subplot(
-  malnourished_africa, malnourished_europe,
+  malnourished_europe, malnourished_africa,
   nrows = 2, margin = 0.05
-)
+) 
+
 subplot_barcharts
 
 
 # obesity plots
-obesity_africa <- plot_ly(africa_data, x = ~Year, y = ~`Avg Obesity %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% increase)")) %>%
-  layout(title = "<b>Average Obesity Rate in Africa and Europe (2000-2020)</b>",
+obesity_africa <- plot_ly(africa_data, x = ~Year, y = ~`Avg Obesity %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% <br> (%{text:.2f}% increase)")) %>%
+  layout(title = "<b>Average Obesity Rate in Europe & Africa (2000-2016)</b>",
          xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2016, by = 2)),
          yaxis = list(title = "<b>Avg Obesity %<b>", 
-                      range = c(0,25), 
+                      range = c(0,28), 
                       tickvals = seq(0, 25, by = 5), 
                       ticktext = paste0(seq(0, 25, by = 5), "%")), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
-         font = list(family = "Palatino"),
+         paper_bgcolor = "#FCFFFC",
+         font = list(family = "Palatino", color = "#1c0b19"),
          legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='black'))
 
-obesity_europe <- plot_ly(europe_data, x = ~Year, y = ~`Avg Obesity %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% (%{text}% increase)")) %>%
-  layout(xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2016, by = 2)),
+obesity_europe <- plot_ly(europe_data, x = ~Year, y = ~`Avg Obesity %`, type = 'bar', color = ~Continent, colors = colors, showlegend = FALSE, text=~Obesity_Perc_Diff, hovertemplate = paste("%{y:.2f}% <br> (%{text:.2f}% increase)")) %>%
+  layout(xaxis = list(title = "<b>Year<b>", tickvals = seq(2000, 2016, by = 2), color="#1c0b19"),
          yaxis = list(title = "<b>Avg Obesity %<b>", 
-                      range = c(0,25), 
+                      range = c(0,28), 
                       tickvals = seq(0, 25, by = 5), 
                       ticktext = paste0(seq(0, 25, by = 5), "%")), 
          hovermode = "x unified", 
-         paper_bgcolor = "aliceblue",
-         font = list(family = "Palatino"))
+         paper_bgcolor = "#FCFFFC",
+         font = list(family = "Palatino", color = "#1c0b19"),
+         legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='#11270b', font=list(color="#1c0b19")))
+
 
 # create subplot for obesity
 subplot_barcharts1 <- subplot(
-  obesity_africa, obesity_europe,
+  obesity_europe, obesity_africa,
   nrows = 2, margin = 0.05
 )
 subplot_barcharts1
@@ -172,7 +182,7 @@ subplot_barcharts1
 world_map <- map_data("world")
 choropleth <- merge(world_map, df, by.x="region", by.y="Country", all.x=TRUE)
 choropleth <- choropleth[!is.na(choropleth$Year), ]
-choropleth <- subset(choropleth, select=-subregion)
+choropleth <- subset(choropleth, Year <= 2016)
 choropleth <- choropleth %>% arrange(region, Year) %>%
   mutate(Malnourished_Percent = ifelse(Malnourished_Percent == "<2.5", 2.5,  Malnourished_Percent)) %>%
   filter(Malnourished_Percent != "") %>%
@@ -205,6 +215,52 @@ country_avgs <- choropleth %>%
 head(country_avgs)
 ```
 
+
+```{r}
+#| label: CONTINENT AVERAGES
+
+average_stats <- country_avgs %>%
+  group_by(Continent) %>%
+  summarize(`Avg Malnourishment %` = round(mean(Avg_Malnour_Perc),2),
+            `Avg Obesity %` = round(mean(Avg_Obesity_Perc),2))
+
+average_stats
+```
+
+```{r}
+#| label: CONTINENT AVERAGES
+
+below10 <- country_avgs %>%
+  filter(Avg_Obesity_Perc<10& Avg_Malnour_Perc<10)
+
+below10
+```
+
+```{r}
+#| label: CONTINENT AVERAGES
+
+country_ranking <- country_avgs %>%
+  mutate(Obesity_Rank = row_number(desc(Avg_Obesity_Perc))) %>%
+  mutate(Malnour_Rank = row_number(desc(Avg_Malnour_Perc))) %>%
+  mutate(Avg_Rank = (Obesity_Rank + Malnour_Rank) / 2) %>%
+  mutate(Ranking = row_number(desc(Avg_Rank))) %>%
+  arrange(Ranking) %>%
+  select(region, Continent, Ranking, Avg_Obesity_Perc, Obesity_Rank, Avg_Malnour_Perc, Malnour_Rank) %>%
+  rename(Country = region, 
+         `Avg Obesity %` = Avg_Obesity_Perc, 
+         `Avg Malnutrition %` = Avg_Malnour_Perc, 
+         `Obesity Ranking` = Obesity_Rank,
+         `Malnutrition Ranking` = Malnour_Rank,
+         `Overall Ranking` = Ranking)
+
+country_table <- datatable(country_ranking,
+          options = list(
+            font = "Palatino"
+          ),
+          rownames = FALSE)
+
+country_table
+```
 
 ```{r}
 #| label: EUROPE CHOROPLETHS
@@ -363,7 +419,7 @@ obesity_map <- plot_ly(
 ) %>%
 colorbar(title = "<b>Rate<b>") %>%
 layout(
-  title = "<b>Average Obesity Rate (2000-2020)<b>",
+  title = "<b>Average Obesity Rate (2000-2016)<b>",
   geo = list(scope = "world", projection = list(type = "equirectangular"), showlakes = FALSE,
     showland = TRUE,
     showcountries = TRUE,
@@ -374,7 +430,7 @@ layout(
     lonaxis = list(range = c(-30, 60)), 
     lataxis = list(range = c(-40, 82)), 
     resolution = 50, landcolor="aliceblue"), 
-  paper_bgcolor = "aliceblue", 
+  paper_bgcolor = "white", 
   font = list(family = "Palatino"), 
   legend=list(x=1.05, y=0.5, borderwidth=1, bordercolor='black', title="Obesity Rate")
 )
@@ -393,7 +449,7 @@ malnourished_map <- plot_ly(
 ) %>%
 colorbar(title = "<b>Rate<b>")%>%
 layout(
-  title = "<b>Average Malnourishment Rate (2000-2020)<b>",
+  title = "<b>Average Malnourishment Rate (2000-2016)<b>",
   geo = list(scope = "world", projection = list(type = "equirectangular"), showlakes = FALSE,
     showland = TRUE,
     showcountries = TRUE,
@@ -403,7 +459,7 @@ layout(
     countrywidth = 0.5,
     lonaxis = list(range = c(-30, 60)), 
     lataxis = list(range = c(-40, 82)), 
-    resolution = 50, landcolor="aliceblue"), paper_bgcolor = "aliceblue", font = list(family = "Palatino")
+    resolution = 50, landcolor="aliceblue"), paper_bgcolor = "white", font = list(family = "Palatino")
 )
 
 obesity_map
