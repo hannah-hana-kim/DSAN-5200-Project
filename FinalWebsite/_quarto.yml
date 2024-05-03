@@ -9,9 +9,9 @@ website:
         text: The Article
       - href: about.qmd
         text: The Authors
-      - href: data.qmd
+      - href: Datatable.Rmd
         text: The Data
-      - href: "https://github.com/hannah-hana-kim/DSAN-5200-Project/tree/Irene"
+      - href: "https://github.com/hannah-hana-kim/DSAN-5200-Project"
         text: The Code
         
 format:
