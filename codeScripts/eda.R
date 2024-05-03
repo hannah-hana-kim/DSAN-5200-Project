@@ -367,6 +367,8 @@ print(avg_data)
 
 avg_data <- as.data.frame(avg_data)
 
+head(polEn)
+head(proteinPapa)
 
 polEn$PrimaryColonizer <- replace(polEn$PrimaryColonizer, polEn$PrimaryColonizer == 'United Kingdom of Great Britain and Northern Ireland', 'UK')
 polEn$PrimaryColonizer <- replace(polEn$PrimaryColonizer, polEn$PrimaryColonizer == 'Netherlands (Kingdom of the)', 'The Netherlands')
@@ -383,7 +385,7 @@ proteinPapa$Area <- replace(proteinPapa$Area, proteinPapa$Area == 'Netherlands (
 head(polEn)
 
 head(proteinPapa)
-colnames(proteinPapa) <- c('X', 'Area', 'Region', 'YearPeriod', 'PrimaryColonizer', 'TotalProtein', 'AnimalProtein')
+colnames(proteinPapa) <- c('X', 'Area', 'Region', 'YearPeriod', 'PrimaryColonizer', 'TotalProtein', 'AnimalProtein', 'NonAnimalProtein')
 
 proteinPapa <- proteinPapa %>%
   mutate(NonAnimalProtein = TotalProtein - AnimalProtein)
@@ -398,6 +400,9 @@ bigMergePapa <- merge(
 bigMergePapa <- subset(bigMergePapa, select = -c(PrimaryColonizer, X))
 
 head(bigMergePapa)
+bigMergePapa$AVG_Percent <- as.numeric(bigMergePapa$AVG_Percent)
+
+summary(bigMergePapa)
 
 bigMergePapa <- na.omit(bigMergePapa)
 
