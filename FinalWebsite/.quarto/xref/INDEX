@@ -1,0 +1,14 @@
+{
+  "index.qmd": {
+    "index.html": "669d5170"
+  },
+  "about.qmd": {
+    "about.html": "d400cd14"
+  },
+  "data.qmd": {
+    "data.html": "fb61c2ae"
+  },
+  "Datatable.Rmd": {
+    "Datatable.html": "8e2d64e3"
+  }
+}
